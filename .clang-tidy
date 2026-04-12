@@ -1,0 +1,47 @@
+# study-slam：C++17，与仓库内 .clang-format 配合（FormatStyle: file）。
+# 使用：cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON 后
+#   clang-tidy -p build test/某文件.cc
+#   run-clang-tidy -p build
+
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-owning-memory,
+  google-*,
+  -google-readability-todo,
+  -google-runtime-references,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-return-braced-init-list,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-identifier-naming,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-uppercase-literal-suffix
+
+WarningsAsErrors: ''
+FormatStyle: file
+
+# 仅对「本仓库 test / src / include」下的头文件输出诊断（路径需含 study-slam）。
+# 克隆目录名不同请改掉 study-slam 一段，或删除本行改用默认（会连第三方头一起报，较吵）。
+HeaderFilterRegex: '.*/study-slam/(test|src|include)/'
+
+CheckOptions:
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: true
