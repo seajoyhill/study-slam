@@ -30,6 +30,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 若主工程用 Debug 而 Pangolin 仅配置了 Release，可在配置主工程时加：
 #   -DCMAKE_MAP_IMPORTED_CONFIG_DEBUG=Release
 #
+# ROS1 + PCL 烟测（可选，见 test/CMakeLists.txt）：不随仓库编译，要求系统已装 ROS 与 PCL。
+#   source /opt/ros/noetic/setup.bash   # 或 melodic 等
+#   cmake -S . -B build -DCMAKE_PREFIX_PATH="/opt/ros/noetic;$CMAKE_PREFIX_PATH"
+#   # 关闭该目标：-DSTUDY_BUILD_ROSBAG_PCL_TEST=OFF
+#
 # 仅当 gflags、glog 都已安装到 .deps 时才优先 .deps；否则易出现「conda 的 glog + .deps 的 gflags」混链、重复注册 gflags。
 set(_study_deps "${CMAKE_SOURCE_DIR}/.deps")
 if(EXISTS "${_study_deps}/lib/cmake/gflags/gflags-config.cmake" AND EXISTS "${_study_deps}/lib/cmake/glog/glog-config.cmake")
