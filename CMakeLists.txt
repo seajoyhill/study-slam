@@ -31,9 +31,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #   -DCMAKE_MAP_IMPORTED_CONFIG_DEBUG=Release
 #
 # ROS1 + PCL 烟测（可选，见 test/CMakeLists.txt）：不随仓库编译，要求系统已装 ROS 与 PCL。
+# 相邻帧 NDT 建图可执行文件 ndt_bag_mapper（见 src/CMakeLists.txt）：同上依赖，另需 PCL registration。
 #   source /opt/ros/noetic/setup.bash   # 或 melodic 等
 #   cmake -S . -B build -DCMAKE_PREFIX_PATH="/opt/ros/noetic;$CMAKE_PREFIX_PATH"
-#   # 关闭该目标：-DSTUDY_BUILD_ROSBAG_PCL_TEST=OFF
+#   # 关闭该目标：-DSTUDY_BUILD_ROSBAG_PCL_TEST=OFF / -DSTUDY_BUILD_NDT_BAG_MAPPER=OFF
 #
 # 仅当 gflags、glog 都已安装到 .deps 时才优先 .deps；否则易出现「conda 的 glog + .deps 的 gflags」混链、重复注册 gflags。
 set(_study_deps "${CMAKE_SOURCE_DIR}/.deps")
@@ -52,4 +53,5 @@ endif()
 unset(_study_pangolin_build)
 find_package(Pangolin 0.7 CONFIG REQUIRED)
 
+add_subdirectory(src)
 add_subdirectory(test)
