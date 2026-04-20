@@ -10,10 +10,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -55,6 +57,7 @@ constexpr bool kEnableIntensityDebugLog = true;
 constexpr bool kInvertRvizRainbow = false;
 constexpr float kCameraTranslationScale = 0.02f;
 constexpr float kCameraZoomFraction = 0.10f;
+constexpr double kTargetFrameRate = 60.0;
 
 void ApplyQuaternionRotation(float qx, float qy, float qz, float qw) {
   const float n = std::sqrt(qx * qx + qy * qy + qz * qz + qw * qw);
@@ -94,19 +97,26 @@ void DrawRosAxis(float s) {
   pangolin::glDrawColoredVertices<float, float>(6, lines, colors, GL_LINES, 3, 3);
 }
 
-void DrawTrajectory(const std::vector<PoseSample>& poses, std::size_t end_idx) {
-  if (poses.size() < 2 || end_idx < 1) {
+std::vector<float> BuildTrajectoryVertices(const std::vector<PoseSample>& poses) {
+  std::vector<float> vertices;
+  vertices.reserve(poses.size() * 3);
+  for (const PoseSample& pose : poses) {
+    vertices.push_back(pose.x);
+    vertices.push_back(pose.y);
+    vertices.push_back(pose.z);
+  }
+  return vertices;
+}
+
+void DrawTrajectory(const std::vector<float>& vertices, std::size_t end_idx) {
+  const std::size_t point_count = vertices.size() / 3;
+  if (point_count < 2 || end_idx < 1) {
     return;
   }
-  std::vector<float> v;
-  v.reserve((end_idx + 1) * 3);
-  for (std::size_t i = 0; i <= end_idx && i < poses.size(); ++i) {
-    v.push_back(poses[i].x);
-    v.push_back(poses[i].y);
-    v.push_back(poses[i].z);
-  }
+  const std::size_t draw_points = std::min(end_idx + 1, point_count);
   glColor3f(1.f, 0.85f, 0.2f);
-  pangolin::glDrawVertices<float>(static_cast<GLsizei>(v.size() / 3), v.data(), GL_LINE_STRIP, 3);
+  pangolin::glDrawVertices<float>(static_cast<GLsizei>(draw_points), vertices.data(), GL_LINE_STRIP,
+                                  3);
 }
 
 void DrawPointCloud(const std::vector<float>& xyz, const std::vector<float>& rgb) {
@@ -398,6 +408,7 @@ int main(int argc, char** argv) {
     std::cerr << "No valid odom translation samples found on topic " << odom_topic << ".\n";
     return 2;
   }
+  const std::vector<float> trajectory_vertices = BuildTrajectoryVertices(poses);
 
   constexpr int w = 1280;
   constexpr int h = 720;
@@ -420,16 +431,18 @@ int main(int argc, char** argv) {
 
   std::size_t idx = 0;
   std::size_t cloud_idx = 0;
-  double play_sec = 0.0;
   const double speed = 1.0;
-  const double dt_nominal = 1.0 / 60.0;
+  const auto frame_interval = std::chrono::duration<double>(1.0 / kTargetFrameRate);
+  const auto play_start = std::chrono::steady_clock::now();
+  auto next_frame_time = play_start;
 
   std::cout << "Playing map <- " << rslidar_frame_id
             << " translation from " << odom_topic
             << ". Controls: mouse drag/zoom, ESC to exit.\n";
 
   while (!pangolin::ShouldQuit()) {
-    play_sec += dt_nominal * speed;
+    const auto now = std::chrono::steady_clock::now();
+    double play_sec = std::chrono::duration<double>(now - play_start).count() * speed;
     if (duration > 0.0 && play_sec > duration) {
       play_sec = duration;
     }
@@ -450,7 +463,7 @@ int main(int argc, char** argv) {
     DrawRosAxis(2.0f);
 
     // trajectory from odom translation
-    DrawTrajectory(poses, idx);
+    DrawTrajectory(trajectory_vertices, idx);
 
     // rslidar frame transformed by odom pose (translation + orientation)
     glPushMatrix();
@@ -463,6 +476,15 @@ int main(int argc, char** argv) {
     glPopMatrix();
 
     pangolin::FinishFrame();
+
+    next_frame_time += std::chrono::duration_cast<std::chrono::steady_clock::duration>(frame_interval);
+    const auto sleep_until = next_frame_time;
+    const auto after_render = std::chrono::steady_clock::now();
+    if (sleep_until > after_render) {
+      std::this_thread::sleep_until(sleep_until);
+    } else {
+      next_frame_time = after_render;
+    }
 
     if (duration > 0.0 && play_sec >= duration) {
       // Keep final frame visible; user can close window manually.
