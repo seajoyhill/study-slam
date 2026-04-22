@@ -1,3 +1,18 @@
+
+add_library(mloam
+  utils/io_utils.cc
+)
+
+target_include_directories(mloam
+  PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(mloam
+  PUBLIC
+    Eigen3::Eigen
+)
+
 # 相邻帧 NDT 建图（可选，与 test/rosbag 目标相同依赖条件）
 option(STUDY_BUILD_NDT_BAG_MAPPER "Build ndt_bag_mapper (ROS bag + PCL NDT)" ON)
 if(STUDY_BUILD_NDT_BAG_MAPPER)
@@ -26,3 +41,4 @@ if(STUDY_BUILD_NDT_BAG_MAPPER)
     message(STATUS "ndt_bag_mapper: skipped (need rosbag, pcl_conversions, PCL registration in CMAKE_PREFIX_PATH)")
   endif()
 endif()
+
