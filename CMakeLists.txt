@@ -57,3 +57,4 @@ find_package(Eigen3 3.4.0 CONFIG REQUIRED PATHS "${CMAKE_SOURCE_DIR}/thirdparty/
 
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(examples)
