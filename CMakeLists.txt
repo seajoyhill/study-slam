@@ -55,6 +55,7 @@ find_package(Pangolin 0.7 CONFIG REQUIRED)
 
 find_package(Eigen3 3.4.0 CONFIG REQUIRED PATHS "${CMAKE_SOURCE_DIR}/thirdparty/eigen-3.4.1" NO_DEFAULT_PATH)
 
+include_directories("${CMAKE_SOURCE_DIR}/thirdparty/")
 add_subdirectory(src)
 add_subdirectory(test)
 add_subdirectory(examples)
